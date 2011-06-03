@@ -24,6 +24,7 @@ Changes
 
     1.0: First version
     1.1: Add resolution history.
+    1.2: Update to work with Glimpse 0.82.
 
 [Glimpse]: https://github.com/Glimpse/Glimpse "Glimpse"
 [package]: http://nuget.org/List/Packages/glimpse-dependencies "Glimpse-Dependencies NuGet package"

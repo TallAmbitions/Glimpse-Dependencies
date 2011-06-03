@@ -8,7 +8,7 @@ namespace Tall.Glimpse
     using System.Threading;
     using System.Web;
     using System.Web.Mvc;
-    using global::Glimpse.Net.Extensibility;
+    using global::Glimpse.Core.Extensibility;
 
     [GlimpsePlugin(ShouldSetupInInit = true)]
     public class Dependencies : IGlimpsePlugin
