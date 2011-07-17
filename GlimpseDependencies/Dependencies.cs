@@ -19,7 +19,7 @@ namespace Tall.Glimpse
 
         public string Name { get { return "Dependencies"; } }
 
-        public void SetupInit(HttpApplication application)
+        public void SetupInit()
         {
             if (Interlocked.CompareExchange(ref history, new List<GlimpseDependencyMetadata>(), null) == null)
             {
@@ -27,11 +27,11 @@ namespace Tall.Glimpse
             }
         }
 
-        public object GetData(HttpApplication application)
+        public object GetData(HttpContextBase context)
         {
             var header = new [] { "Call", "Requested Type", "Returned Types" };
 
-            var newData = ((IList<GlimpseDependencyMetadata>)application.Context.Items[Dependency]);
+            var newData = ((IList<GlimpseDependencyMetadata>)context.Items[Dependency]);
 
             List<GlimpseDependencyMetadata> oldData;
             lock (history)
