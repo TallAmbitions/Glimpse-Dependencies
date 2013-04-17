@@ -1,8 +1,5 @@
 ﻿// Copyright (c) 2011 Tall Ambitions, LLC
 // See included LICENSE for details.
-
-using Glimpse.AspNet.Extensibility;
-
 namespace Tall.Glimpse
 {
     using System;
@@ -11,20 +8,14 @@ namespace Tall.Glimpse
     using System.Threading;
     using System.Web.Mvc;
     using global::Glimpse.Core.Extensibility;
+    using global::Glimpse.AspNet.Extensibility;
+    using global::Glimpse.Core.Extensions;
 
-    public class Dependencies : AspNetTab
+    public class Dependencies : AspNetTab, ITabSetup, IInspector
     {
         internal const string Dependency = "Tall.Glimpse.Dependencies";
-        static List<GlimpseDependencyMetadata> history;
-        static readonly IEqualityComparer<GlimpseDependencyMetadata> comparer = new GlimpseDependencyComparer();
-
-        public Dependencies()
-        {
-            if (Interlocked.CompareExchange(ref history, new List<GlimpseDependencyMetadata>(), null) == null)
-            {
-                DependencyResolver.SetResolver(new GlimpseDependencyResolver(DependencyResolver.Current));
-            }
-        }
+        private static List<GlimpseDependencyMetadata> history;
+        private static readonly IEqualityComparer<GlimpseDependencyMetadata> comparer = new GlimpseDependencyComparer();
 
         public override string Name
         {
@@ -35,21 +26,21 @@ namespace Tall.Glimpse
         {
             var header = new [] { "Call", "Requested Type", "Returned Types" };
 
-            var newData = context.TabStore.Get(Dependency) as IList<GlimpseDependencyMetadata>;
+            var newData = context.GetMessages<GlimpseDependencyMetadata>();
 
             List<GlimpseDependencyMetadata> oldData;
             lock (history)
             {
                 oldData = history.Except(newData, comparer).ToList();
                 history.Clear();
-                history.Capacity = newData.Count + oldData.Count;
+                history.Capacity = newData.Count() + oldData.Count;
                 history.AddRange(oldData.Concat(newData));
             }
 
             return new [] { header }.Concat(newData.Select(GetData())).Concat(oldData.Select(GetData("quiet"))).ToArray();
         }
 
-        static Func<GlimpseDependencyMetadata, string[]> GetData(string @class = null)
+        private static Func<GlimpseDependencyMetadata, string[]> GetData(string @class = null)
         {
             return data => new []
                                {
@@ -60,7 +51,7 @@ namespace Tall.Glimpse
                                };
         }
 
-        class GlimpseDependencyComparer : IEqualityComparer<GlimpseDependencyMetadata>
+        private class GlimpseDependencyComparer : IEqualityComparer<GlimpseDependencyMetadata>
         {
             public bool Equals(GlimpseDependencyMetadata x, GlimpseDependencyMetadata y)
             {
@@ -70,6 +61,19 @@ namespace Tall.Glimpse
             public int GetHashCode(GlimpseDependencyMetadata obj)
             {
                 return obj.Call.GetHashCode() ^ (obj.RequestedType.GetHashCode() * 397);
+            }
+        }
+
+        public void Setup(ITabSetupContext context)
+        {
+            context.PersistMessages<GlimpseDependencyMetadata>();
+        }
+
+        public void Setup(IInspectorContext context)
+        {
+            if (Interlocked.CompareExchange(ref history, new List<GlimpseDependencyMetadata>(), null) == null)
+            {
+                DependencyResolver.SetResolver(new GlimpseDependencyResolver(DependencyResolver.Current, context.MessageBroker));
             }
         }
     }
