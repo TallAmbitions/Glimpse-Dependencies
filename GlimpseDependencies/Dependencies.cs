@@ -1,25 +1,24 @@
 ﻿// Copyright (c) 2011 Tall Ambitions, LLC
 // See included LICENSE for details.
+
+using Glimpse.AspNet.Extensibility;
+
 namespace Tall.Glimpse
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
-    using System.Web;
     using System.Web.Mvc;
     using global::Glimpse.Core.Extensibility;
 
-    [GlimpsePlugin(ShouldSetupInInit = true)]
-    public class Dependencies : IGlimpsePlugin
+    public class Dependencies : AspNetTab
     {
         internal const string Dependency = "Tall.Glimpse.Dependencies";
-        private static List<GlimpseDependencyMetadata> history;
-        private static readonly IEqualityComparer<GlimpseDependencyMetadata> comparer = new GlimpseDependencyComparer();
+        static List<GlimpseDependencyMetadata> history;
+        static readonly IEqualityComparer<GlimpseDependencyMetadata> comparer = new GlimpseDependencyComparer();
 
-        public string Name { get { return "Dependencies"; } }
-
-        public void SetupInit()
+        public Dependencies()
         {
             if (Interlocked.CompareExchange(ref history, new List<GlimpseDependencyMetadata>(), null) == null)
             {
@@ -27,11 +26,16 @@ namespace Tall.Glimpse
             }
         }
 
-        public object GetData(HttpContextBase context)
+        public override string Name
+        {
+            get { return "Dependencies"; }
+        }
+
+        public override object GetData(ITabContext context)
         {
             var header = new [] { "Call", "Requested Type", "Returned Types" };
 
-            var newData = ((IList<GlimpseDependencyMetadata>)context.Items[Dependency]);
+            var newData = context.TabStore.Get(Dependency) as IList<GlimpseDependencyMetadata>;
 
             List<GlimpseDependencyMetadata> oldData;
             lock (history)
@@ -45,7 +49,7 @@ namespace Tall.Glimpse
             return new [] { header }.Concat(newData.Select(GetData())).Concat(oldData.Select(GetData("quiet"))).ToArray();
         }
 
-        private static Func<GlimpseDependencyMetadata, string[]> GetData(string @class = null)
+        static Func<GlimpseDependencyMetadata, string[]> GetData(string @class = null)
         {
             return data => new []
                                {
@@ -56,7 +60,7 @@ namespace Tall.Glimpse
                                };
         }
 
-        private class GlimpseDependencyComparer : IEqualityComparer<GlimpseDependencyMetadata>
+        class GlimpseDependencyComparer : IEqualityComparer<GlimpseDependencyMetadata>
         {
             public bool Equals(GlimpseDependencyMetadata x, GlimpseDependencyMetadata y)
             {
