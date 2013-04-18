@@ -6,39 +6,34 @@ namespace Tall.Glimpse
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
-    using System.Web;
     using System.Web.Mvc;
     using global::Glimpse.Core.Extensibility;
+    using global::Glimpse.AspNet.Extensibility;
+    using global::Glimpse.Core.Extensions;
 
-    [GlimpsePlugin(ShouldSetupInInit = true)]
-    public class Dependencies : IGlimpsePlugin
+    public class Dependencies : AspNetTab, ITabSetup, IInspector
     {
         internal const string Dependency = "Tall.Glimpse.Dependencies";
         private static List<GlimpseDependencyMetadata> history;
         private static readonly IEqualityComparer<GlimpseDependencyMetadata> comparer = new GlimpseDependencyComparer();
 
-        public string Name { get { return "Dependencies"; } }
-
-        public void SetupInit()
+        public override string Name
         {
-            if (Interlocked.CompareExchange(ref history, new List<GlimpseDependencyMetadata>(), null) == null)
-            {
-                DependencyResolver.SetResolver(new GlimpseDependencyResolver(DependencyResolver.Current));
-            }
+            get { return "Dependencies"; }
         }
 
-        public object GetData(HttpContextBase context)
+        public override object GetData(ITabContext context)
         {
             var header = new [] { "Call", "Requested Type", "Returned Types" };
 
-            var newData = ((IList<GlimpseDependencyMetadata>)context.Items[Dependency]);
+            var newData = context.GetMessages<GlimpseDependencyMetadata>();
 
             List<GlimpseDependencyMetadata> oldData;
             lock (history)
             {
                 oldData = history.Except(newData, comparer).ToList();
                 history.Clear();
-                history.Capacity = newData.Count + oldData.Count;
+                history.Capacity = newData.Count() + oldData.Count;
                 history.AddRange(oldData.Concat(newData));
             }
 
@@ -66,6 +61,19 @@ namespace Tall.Glimpse
             public int GetHashCode(GlimpseDependencyMetadata obj)
             {
                 return obj.Call.GetHashCode() ^ (obj.RequestedType.GetHashCode() * 397);
+            }
+        }
+
+        public void Setup(ITabSetupContext context)
+        {
+            context.PersistMessages<GlimpseDependencyMetadata>();
+        }
+
+        public void Setup(IInspectorContext context)
+        {
+            if (Interlocked.CompareExchange(ref history, new List<GlimpseDependencyMetadata>(), null) == null)
+            {
+                DependencyResolver.SetResolver(new GlimpseDependencyResolver(DependencyResolver.Current, context.MessageBroker));
             }
         }
     }

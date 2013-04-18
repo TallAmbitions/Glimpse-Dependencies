@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>glimpse-dependencies</id>
-    <title>Glimpse-Dependencies.MVC3</title>
+    <id>glimpse-dependencies-mvc4</id>
+    <title>Glimpse-Dependencies.MVC4</title>
     <version>1.4</version>
     <authors>Joe Wasson</authors>
     <owners>Tall Ambitions LLC</owners>
@@ -10,10 +10,10 @@
     <projectUrl>https://github.com/TallAmbitions/Glimpse-Dependencies/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Glimpse Plugin to view MVC dependency resolution.</description>
-    <tags>glimpse mvc3</tags>
+    <tags>glimpse mvc4</tags>
     <dependencies>
       <dependency id="Glimpse" version="1.3.0" />
-      <dependency id="Glimpse.MVC3" version="1.2.1" />
+      <dependency id="Glimpse.MVC4" version="1.2.1" />
     </dependencies>
   </metadata>
   <files>

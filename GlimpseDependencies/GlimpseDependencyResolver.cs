@@ -5,22 +5,24 @@ namespace Tall.Glimpse
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Web;
     using System.Web.Mvc;
+    using global::Glimpse.Core.Extensibility;
 
     public class GlimpseDependencyResolver : IDependencyResolver
     {
         private readonly IDependencyResolver resolver;
+        private readonly IMessageBroker messageBroker;
 
-        public GlimpseDependencyResolver(IDependencyResolver resolver)
+        public GlimpseDependencyResolver(IDependencyResolver resolver, IMessageBroker messageBroker)
         {
             this.resolver = resolver;
+            this.messageBroker = messageBroker;
         }
 
         object IDependencyResolver.GetService(Type serviceType)
         {
             var result = this.resolver.GetService(serviceType);
-            Store.Add(new GlimpseDependencyMetadata
+            messageBroker.Publish(new GlimpseDependencyMetadata
             {
                 Call = "GetService",
                 RequestedType = serviceType,
@@ -32,28 +34,13 @@ namespace Tall.Glimpse
         IEnumerable<object> IDependencyResolver.GetServices(Type serviceType)
         {
             var services = this.resolver.GetServices(serviceType);
-            Store.Add(new GlimpseDependencyMetadata
+            messageBroker.Publish(new GlimpseDependencyMetadata
             {
                 Call = "GetServices",
                 RequestedType = serviceType,
                 ReturnedTypes = (services ?? Enumerable.Empty<object>()).Select(s => s.GetType()),
             });
             return services;
-        }
-
-        private static IList<GlimpseDependencyMetadata> Store
-        {
-            get
-            {
-                var items = HttpContext.Current.Items;
-                var store = items[Dependencies.Dependency] as IList<GlimpseDependencyMetadata>;
-                if (store == null)
-                {
-                    items[Dependencies.Dependency] = store = new List<GlimpseDependencyMetadata>();
-                }
-
-                return store;
-            }
         }
     }
 }
