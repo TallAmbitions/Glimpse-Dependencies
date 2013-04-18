@@ -15,5 +15,11 @@ $basePath = (Get-ScriptDirectory)
 
 $nuget = Join-Path (Get-ScriptDirectory) .nuget\NuGet.exe
 
-. $nuget pack $mvc3nuspec -BasePath $basePath -OutputDir D:\Code\packages\  
-. $nuget pack $mvc4nuspec -BasePath $basePath -OutputDir D:\Code\packages\ 
+$pkg_folder = "artifacts"
+
+if(!(test-path $pkg_folder -pathtype container)){
+	New-Item -Type Directory $pkg_folder | Out-Null
+} 
+
+. $nuget pack $mvc3nuspec -BasePath $basePath -OutputDir $pkg_folder
+. $nuget pack $mvc4nuspec -BasePath $basePath -OutputDir $pkg_folder
